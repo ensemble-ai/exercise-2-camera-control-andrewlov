@@ -1,4 +1,4 @@
-class_name PushBox
+class_name PositionLockLerp
 extends CameraControllerBase
 
 
@@ -11,7 +11,14 @@ func _ready() -> void:
 	position = target.position
 	
 
-func _process(delta: float) -> void: 
+func _process(delta: float) -> void: #implement lerp own lerp all in this function
+	# get the vector difference of the camera and target positions, normalize for direction, multiply to get the smooth follow speed
+	# how far you are ahead of leash
+	# (tpos - cpos ).normalize to get direction, direction * delta * followspeed
+	# beyond leash distance, get distance and go in direction of player instead to correct the overcorrection
+	# follow speed: if player is moving
+	# catchup speed,: player is stationary (check with target.velocity which is vector3, compare to vec3 of 0,0,0), camera moves to vessel position, move global position of camera
+	# timer interruption for catchup delay, if the timer isnt null and check velocity as well
 	if !current:
 		return
 	

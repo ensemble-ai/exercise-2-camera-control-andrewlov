@@ -1,4 +1,4 @@
-class_name PushBox
+class_name AutoScroll
 extends CameraControllerBase
 
 
@@ -12,6 +12,7 @@ func _ready() -> void:
 	
 
 func _process(delta: float) -> void: 
+	# 
 	if !current:
 		return
 	
