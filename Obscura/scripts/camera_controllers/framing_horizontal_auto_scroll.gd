@@ -2,8 +2,9 @@ class_name AutoScroll
 extends CameraControllerBase
 
 
-@export var box_width:float = 10.0
-@export var box_height:float = 10.0
+@export var top_left: Vector2 = Vector2(-5, 5)
+@export var bottom_right: Vector2 = Vector2(5, -5)
+@export var autoscroll_speed: Vector3 = Vector3(5.0, 0, 5.0) # Speed of camera auto-scroll
 
 
 func _ready() -> void:
@@ -12,7 +13,6 @@ func _ready() -> void:
 	
 
 func _process(delta: float) -> void: 
-	# 
 	if !current:
 		return
 	
@@ -22,21 +22,26 @@ func _process(delta: float) -> void:
 	var tpos = target.global_position
 	var cpos = global_position
 	
+	global_position.z += autoscroll_speed.z * delta
+	global_position.x += autoscroll_speed.x * delta
+	
+	target.global_position.x += autoscroll_speed.x * delta
+	target.global_position.z += autoscroll_speed.z * delta
 	#boundary checks
 	#left
-	var diff_between_left_edges = (tpos.x - target.WIDTH / 2.0) - (cpos.x - box_width / 2.0)
+	var diff_between_left_edges = (tpos.x - target.WIDTH / 2.0) - (cpos.x + top_left.x)
 	if diff_between_left_edges < 0:
 		global_position.x += diff_between_left_edges
 	#right
-	var diff_between_right_edges = (tpos.x + target.WIDTH / 2.0) - (cpos.x + box_width / 2.0)
+	var diff_between_right_edges = (tpos.x + target.WIDTH / 2.0) - (cpos.x + bottom_right.x)
 	if diff_between_right_edges > 0:
 		global_position.x += diff_between_right_edges
 	#top
-	var diff_between_top_edges = (tpos.z - target.HEIGHT / 2.0) - (cpos.z - box_height / 2.0)
+	var diff_between_top_edges = (tpos.z - target.HEIGHT / 2.0) - (cpos.z - top_left.y)
 	if diff_between_top_edges < 0:
 		global_position.z += diff_between_top_edges
 	#bottom
-	var diff_between_bottom_edges = (tpos.z + target.HEIGHT / 2.0) - (cpos.z + box_height / 2.0)
+	var diff_between_bottom_edges = (tpos.z + target.HEIGHT / 2.0) - (cpos.z - bottom_right.y)
 	if diff_between_bottom_edges > 0:
 		global_position.z += diff_between_bottom_edges
 		
@@ -51,10 +56,10 @@ func draw_logic() -> void:
 	mesh_instance.mesh = immediate_mesh
 	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	
-	var left:float = -box_width / 2
-	var right:float = box_width / 2
-	var top:float = -box_height / 2
-	var bottom:float = box_height / 2
+	var left:float = top_left.x
+	var right:float = bottom_right.x
+	var top:float = bottom_right.y
+	var bottom:float = top_left.y
 	
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
 	immediate_mesh.surface_add_vertex(Vector3(right, 0, top))
