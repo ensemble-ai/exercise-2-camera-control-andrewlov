@@ -3,6 +3,7 @@ extends CharacterBody3D
 
 @export var terrforming_power:float = 1.0
 @export var terrain_manager:TerrainManager
+@export var is_hyper_speed: bool = false
 
 const RADIUS:float = 0.5
 const HEIGHT:float = RADIUS * 2.0
@@ -14,11 +15,14 @@ const HYPER_SPEED = 300
 func _physics_process(_delta):
 	
 	var speed = BASE_SPEED
+	var is_hyper_speed = false
+	
 	$ParticleTrail.visible = false 
 	if Input.is_action_pressed("ui_accept"):
 		_play($Audio/HyperSpeed)
 		speed = HYPER_SPEED
 		$ParticleTrail.visible = true
+		is_hyper_speed = true
 
 	if Input.is_action_just_pressed("raise_terrain"):
 		_play($Audio/Terraforming)

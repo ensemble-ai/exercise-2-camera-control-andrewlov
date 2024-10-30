@@ -1,17 +1,15 @@
 class_name PositionLockLerp
 extends CameraControllerBase
 
+@export var follow_speed:float = 50.0 #0.5 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2)) #slower
+@export var catchup_speed:float = 90#0.8 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2))#faster
+@export var leash_distance:float = 13
 
-@export var box_width:float = 10.0
-@export var box_height:float = 10.0
-@export var follow_speed:float = 3#target.velocity.x#0.5 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2)) #slower
-@export var catchup_speed:float = 3#target.velocity.z#0.8 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2))#faster
-@export var leash_distance:float = 10.0
 
 func _ready() -> void:
 	super()
 	position = target.position
-	
+
 
 func _process(delta: float) -> void: #implement lerp own lerp all in this function
 	# get the vector difference of the camera and target positions, normalize for direction, multiply to get the smooth follow speed
@@ -27,33 +25,29 @@ func _process(delta: float) -> void: #implement lerp own lerp all in this functi
 	if draw_camera_logic:
 		draw_logic()
 	
+	var direction
+	
 	var tpos = target.global_position
 	var cpos = global_position
-	# while the vessel is moving, implement that speed to be that of the follow_speed * direction * delta
-	# once the vessel stops moving, implement that speed to be catchup_speed * delta * direction
 	var distance = cpos.distance_to(tpos)
-	print(distance)
-	print(target.velocity)
-	var direction = (tpos - cpos).normalized()
 	
-	var speed: float
-	if not(target.velocity.x == 0 and target.velocity.z == 0):
-		speed = follow_speed
-	else:
-		speed = catchup_speed
-
-	#boundary checks
-	#left
-	if distance > leash_distance: # break the leash, must catch up
-		#if target.velocity.x == 0 and target.velocity.z == 0:
-			#global_position += direction * catchup_speed * delta
-		global_position = direction * lerp(global_position, target.global_position, catchup_speed * delta)
-	else:
-		if target.velocity.x == 0 and target.velocity.z == 0:
-			global_position = direction * lerp(global_position, target.global_position, catchup_speed * delta)
+	# while the vessel is moving, implement that speed to be that of the follow_speed * direction * delta
+	if distance > leash_distance:
+		if target.velocity != Vector3.ZERO:
+			global_position += target.velocity * delta
 		else:
-			global_position = direction * lerp(global_position, target.global_position, follow_speed * delta)
-		
+			direction = (tpos - cpos).normalized()
+			global_position += direction * catchup_speed * delta
+	# once the vessel stops moving, implement that speed to be catchup_speed * delta * direction
+	else: 
+		if target.velocity == Vector3(0, 0, 0):
+			direction = (tpos - cpos).normalized()
+			global_position += direction * catchup_speed * delta
+		else:
+			direction = (tpos - cpos).normalized()
+			global_position += direction * follow_speed * delta
+	
+	print(target.velocity)
 	super(delta)
 
 
@@ -86,11 +80,3 @@ func draw_logic() -> void:
 	#mesh is freed after one update of _process
 	await get_tree().process_frame
 	mesh_instance.queue_free()
-
-
-func lerp(start: Vector3, end: Vector3, alpha: float) -> Vector3:
-	return Vector3(
-		start.x + (end.x - start.x) * alpha,
-		start.y + (end.y - start.y) * alpha,
-		start.z + (end.z - start.z) * alpha,
-	)
