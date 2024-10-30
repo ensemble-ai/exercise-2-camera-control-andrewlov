@@ -4,7 +4,9 @@ extends CameraControllerBase
 
 @export var box_width:float = 10.0
 @export var box_height:float = 10.0
-
+@export var follow_speed:float = 3#target.velocity.x#0.5 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2)) #slower
+@export var catchup_speed:float = 3#target.velocity.z#0.8 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2))#faster
+@export var leash_distance:float = 10.0
 
 func _ready() -> void:
 	super()
@@ -27,24 +29,30 @@ func _process(delta: float) -> void: #implement lerp own lerp all in this functi
 	
 	var tpos = target.global_position
 	var cpos = global_position
+	# while the vessel is moving, implement that speed to be that of the follow_speed * direction * delta
+	# once the vessel stops moving, implement that speed to be catchup_speed * delta * direction
+	var distance = cpos.distance_to(tpos)
+	print(distance)
+	print(target.velocity)
+	var direction = (tpos - cpos).normalized()
 	
+	var speed: float
+	if not(target.velocity.x == 0 and target.velocity.z == 0):
+		speed = follow_speed
+	else:
+		speed = catchup_speed
+
 	#boundary checks
 	#left
-	var diff_between_left_edges = (tpos.x - target.WIDTH / 2.0) - (cpos.x - box_width / 2.0)
-	if diff_between_left_edges < 0:
-		global_position.x += diff_between_left_edges
-	#right
-	var diff_between_right_edges = (tpos.x + target.WIDTH / 2.0) - (cpos.x + box_width / 2.0)
-	if diff_between_right_edges > 0:
-		global_position.x += diff_between_right_edges
-	#top
-	var diff_between_top_edges = (tpos.z - target.HEIGHT / 2.0) - (cpos.z - box_height / 2.0)
-	if diff_between_top_edges < 0:
-		global_position.z += diff_between_top_edges
-	#bottom
-	var diff_between_bottom_edges = (tpos.z + target.HEIGHT / 2.0) - (cpos.z + box_height / 2.0)
-	if diff_between_bottom_edges > 0:
-		global_position.z += diff_between_bottom_edges
+	if distance > leash_distance: # break the leash, must catch up
+		#if target.velocity.x == 0 and target.velocity.z == 0:
+			#global_position += direction * catchup_speed * delta
+		global_position = direction * lerp(global_position, target.global_position, catchup_speed * delta)
+	else:
+		if target.velocity.x == 0 and target.velocity.z == 0:
+			global_position = direction * lerp(global_position, target.global_position, catchup_speed * delta)
+		else:
+			global_position = direction * lerp(global_position, target.global_position, follow_speed * delta)
 		
 	super(delta)
 
@@ -57,23 +65,15 @@ func draw_logic() -> void:
 	mesh_instance.mesh = immediate_mesh
 	mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	
-	var left:float = -box_width / 2
-	var right:float = box_width / 2
-	var top:float = -box_height / 2
-	var bottom:float = box_height / 2
+	var cross_size: float = 5
 	
 	immediate_mesh.surface_begin(Mesh.PRIMITIVE_LINES, material)
-	immediate_mesh.surface_add_vertex(Vector3(right, 0, top))
-	immediate_mesh.surface_add_vertex(Vector3(right, 0, bottom))
+	immediate_mesh.surface_add_vertex(Vector3(-cross_size/2, 0, 0))
+	immediate_mesh.surface_add_vertex(Vector3(cross_size/2, 0, 0))
 	
-	immediate_mesh.surface_add_vertex(Vector3(right, 0, bottom))
-	immediate_mesh.surface_add_vertex(Vector3(left, 0, bottom))
+	immediate_mesh.surface_add_vertex(Vector3(0, 0, -cross_size/2))
+	immediate_mesh.surface_add_vertex(Vector3(0, 0, cross_size/2))
 	
-	immediate_mesh.surface_add_vertex(Vector3(left, 0, bottom))
-	immediate_mesh.surface_add_vertex(Vector3(left, 0, top))
-	
-	immediate_mesh.surface_add_vertex(Vector3(left, 0, top))
-	immediate_mesh.surface_add_vertex(Vector3(right, 0, top))
 	immediate_mesh.surface_end()
 
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -86,3 +86,11 @@ func draw_logic() -> void:
 	#mesh is freed after one update of _process
 	await get_tree().process_frame
 	mesh_instance.queue_free()
+
+
+func lerp(start: Vector3, end: Vector3, alpha: float) -> Vector3:
+	return Vector3(
+		start.x + (end.x - start.x) * alpha,
+		start.y + (end.y - start.y) * alpha,
+		start.z + (end.z - start.z) * alpha,
+	)
