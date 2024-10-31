@@ -37,16 +37,13 @@ func _process(delta: float) -> void: #implement lerp own lerp all in this functi
 	var cpos = global_position
 	var direction = (tpos - cpos).normalized()
 	var distance = sqrt(pow(cpos.x - tpos.x, 2) + pow(cpos.z - tpos.z, 2))
-	var is_camera_behind = target.velocity.dot(tpos - cpos) < 0
 
 	
 	lead_speed = target.velocity.length() * 1.2
 	
 	if distance > leash_distance: # break the leash
 		if target.velocity != Vector3.ZERO:
-			if target.is_hyper_speed:
-				global_position = target.position + direction * leash_distance
-				#global_position += target.velocity * delta
+			global_position += target.velocity * delta
 		else: # break leash, stationary
 			direction = (tpos - cpos).normalized()
 			global_position += direction * catchup_speed * delta
