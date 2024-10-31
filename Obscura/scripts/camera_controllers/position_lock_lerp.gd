@@ -1,9 +1,9 @@
 class_name PositionLockLerp
 extends CameraControllerBase
 
-@export var follow_speed:float = 50.0 #0.5 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2)) #slower
-@export var catchup_speed:float = 90#0.8 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2))#faster
-@export var leash_distance:float = 13
+@export var follow_speed:float #0.5 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2)) #slower
+@export var catchup_speed:float #0.8 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2))#faster
+@export var leash_distance:float = 12
 
 
 func _ready() -> void:
@@ -20,6 +20,7 @@ func _process(delta: float) -> void: #implement lerp own lerp all in this functi
 	# catchup speed,: player is stationary (check with target.velocity which is vector3, compare to vec3 of 0,0,0), camera moves to vessel position, move global position of camera
 	# timer interruption for catchup delay, if the timer isnt null and check velocity as well
 	if !current:
+		position = target.position
 		return
 	
 	if draw_camera_logic:
@@ -29,8 +30,11 @@ func _process(delta: float) -> void: #implement lerp own lerp all in this functi
 	
 	var tpos = target.global_position
 	var cpos = global_position
-	var distance = cpos.distance_to(tpos)
+	var distance = sqrt(pow(cpos.x - tpos.x, 2) + pow(cpos.z - tpos.z, 2)) #pos.distance_to(tpos)
 	
+	
+	follow_speed = 0.6 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2))
+	catchup_speed = 90
 	# while the vessel is moving, implement that speed to be that of the follow_speed * direction * delta
 	if distance > leash_distance:
 		if target.velocity != Vector3.ZERO:
@@ -40,14 +44,13 @@ func _process(delta: float) -> void: #implement lerp own lerp all in this functi
 			global_position += direction * catchup_speed * delta
 	# once the vessel stops moving, implement that speed to be catchup_speed * delta * direction
 	else: 
-		if target.velocity == Vector3(0, 0, 0):
+		if target.velocity == Vector3.ZERO:
 			direction = (tpos - cpos).normalized()
 			global_position += direction * catchup_speed * delta
 		else:
 			direction = (tpos - cpos).normalized()
 			global_position += direction * follow_speed * delta
 	
-	print(target.velocity)
 	super(delta)
 
 
