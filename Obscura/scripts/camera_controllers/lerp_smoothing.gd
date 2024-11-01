@@ -14,6 +14,7 @@ func _ready() -> void:
 	super()
 	position = target.position
 
+
 func _process(delta: float) -> void: 
 	if !current:
 		position = target.position
@@ -31,7 +32,7 @@ func _process(delta: float) -> void:
 	lead_speed = target.velocity.length() * 1.2
 	
 	if global_position.x < target.position.x - leash_distance:
-		global_position.x = target.position.x - leash_distance
+		global_position.x = target.position.x - leash_distance	
 	elif global_position.x > target.position.x + leash_distance:
 		global_position.x = target.position.x + leash_distance
 

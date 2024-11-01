@@ -8,10 +8,11 @@ extends CameraControllerBase
 @export var speedup_zone_top_left: Vector2 = Vector2(-5, 5)
 @export var speedup_zone_bottom_right: Vector2 = Vector2(5, -5)
 
+
 func _ready() -> void:
 	draw_camera_logic = true
-	super()
 	position = target.position
+	super()
 
 
 func _process(delta: float) -> void: 
@@ -23,44 +24,39 @@ func _process(delta: float) -> void:
 	
 	var tpos = target.global_position
 	var cpos = global_position
-	var target_velocity = target.velocity
-	var x_speed = 0.0
-	var z_speed = 0.0
+	var speedup: bool = true
+	
 	push_ratio = target.velocity.length() * 0.5
 	
-	#
 	var diff_between_left_edges = (tpos.x - target.WIDTH / 2.0) - (cpos.x + pushbox_top_left.x)
 	if diff_between_left_edges < 0:
-		global_position.x += diff_between_left_edges
+		global_position.x += diff_between_left_edges  # keeps it trapped in the box and pushes it in the direction of the target
+		speedup = false # don't overlap movementts
 	#right
 	var diff_between_right_edges = (tpos.x + target.WIDTH / 2.0) - (cpos.x - pushbox_top_left.x)
 	if diff_between_right_edges > 0:
-		global_position.x += diff_between_right_edges
+		global_position.x += diff_between_right_edges 
+		speedup = false
 	#top
 	var diff_between_top_edges = (tpos.z - target.HEIGHT / 2.0) - (cpos.z - pushbox_top_left.y)
 	if diff_between_top_edges < 0:
-		global_position.z += diff_between_top_edges
+		global_position.z += diff_between_top_edges 
+		speedup = false
 	#bottom
 	var diff_between_bottom_edges = (tpos.z + target.HEIGHT / 2.0) - (cpos.z + pushbox_top_left.y)
 	if diff_between_bottom_edges > 0:
-		global_position.z += diff_between_bottom_edges
+		global_position.z += diff_between_bottom_edges 
+		speedup = false
 	
-	#check to see if its in the speedup zone:
-	var speedup_diff_between_left_edges = (tpos.x - target.WIDTH / 2.0) - (cpos.x + speedup_zone_top_left.x)
-	if speedup_diff_between_left_edges < 0:
-		global_position.x += push_ratio * delta
-	#right
-	var speedup_diff_between_right_edges = (tpos.x + target.WIDTH / 2.0) - (cpos.x - speedup_zone_top_left.x)
-	if speedup_diff_between_right_edges > 0:
-		global_position.x += push_ratio * delta
-	#top
-	var speedup_diff_between_top_edges = (tpos.z - target.HEIGHT / 2.0) - (cpos.z - speedup_zone_top_left.y)
-	if speedup_diff_between_top_edges < 0:
-		global_position.z += push_ratio * delta
-	#bottom
-	var speedup_diff_between_bottom_edges = (tpos.z + target.HEIGHT / 2.0) - (cpos.z + speedup_zone_top_left.y)
-	if speedup_diff_between_bottom_edges > 0:
-		global_position.z += push_ratio * delta
+	if target.position.x >= global_position.x + speedup_zone_bottom_right.x and speedup != false: #right
+		global_position += push_ratio * target.velocity.normalized() * delta
+	elif target.position.x < global_position.x + speedup_zone_top_left.x and speedup != false: #left
+		global_position += push_ratio * target.velocity.normalized() * delta
+	elif target.position.z > global_position.z + speedup_zone_top_left.y and speedup != false: #top
+		global_position += push_ratio * target.velocity.normalized() * delta
+	elif target.position.z < global_position.z + speedup_zone_bottom_right.y and speedup != false: #bottom
+		global_position += push_ratio * target.velocity.normalized() * delta
+	
 	super(delta)
 
 

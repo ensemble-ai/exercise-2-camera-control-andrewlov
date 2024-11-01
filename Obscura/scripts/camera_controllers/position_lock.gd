@@ -16,7 +16,7 @@ func _process(delta: float) -> void:
 		draw_logic()
 	
 	global_position = target.global_position
-		
+	
 	super(delta)
 
 
