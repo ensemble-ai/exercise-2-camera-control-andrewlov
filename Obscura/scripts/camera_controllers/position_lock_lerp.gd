@@ -1,6 +1,7 @@
 class_name PositionLockLerp
 extends CameraControllerBase
 
+
 @export var follow_speed:float 
 @export var catchup_speed:float 
 @export var leash_distance:float = 12
@@ -26,9 +27,9 @@ func _process(delta: float) -> void:
 	var cpos = global_position
 	var distance = sqrt(pow(cpos.x - tpos.x, 2) + pow(cpos.z - tpos.z, 2)) 
 	
-	
 	follow_speed = 0.6 * sqrt(pow(target.velocity.x, 2) + pow(target.velocity.z, 2))
 	catchup_speed = 90
+	
 	if distance > leash_distance:
 		if target.velocity != Vector3.ZERO:
 			global_position += target.velocity * delta
